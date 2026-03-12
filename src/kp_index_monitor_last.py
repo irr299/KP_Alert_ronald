@@ -227,7 +227,7 @@ class KpMonitor:
                 probability_df.drop(columns=["Time (UTC)"], inplace=True)
 
                 empty = df.iloc[0:0].copy()
-                storm_prob_df = pd.DataFrame(columns=["Time (UTC)", "prob 6-7", "prob 7-8", "prob >= 8"])
+                storm_prob_df = pd.DataFrame(columns=["Time (UTC)", "Probability 6-7", "Probability 7-8", "Probability >= 8"])
                 return AnalysisResults(
                     max_kp=float("nan"),
                     max_df=max_values,
