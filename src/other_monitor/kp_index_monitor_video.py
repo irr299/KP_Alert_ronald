@@ -96,6 +96,7 @@ class KpMonitor:
 
     IMAGE_PATH = "/Users/infantronald/work/KP index/KpAlert/mock_files/kp_swift_ensemble_LAST.png"
     IMAGE_PATH_SWPC = "/Users/infantronald/work/KP index/KpAlert/mock_files/kp_swift_ensemble_with_swpc_LAST.png"
+    IMAGE_PATH_AURORA = "/Users/infantronald/work/KP index/KpAlert/mock_files/auroro_LAST.png"
     CSV_PATH = "/Users/infantronald/work/KP index/KpAlert/mock_files/kp_product_file_SWIFT_LAST.csv"
     VIDEO_PATH_AURORA = "/Users/infantronald/work/KP index/KpAlert/mock_files/aurora_forecast.mp4"
 
@@ -137,6 +138,10 @@ class KpMonitor:
     def copy_aurora_video(self) -> str:
         """Copy the aurora video to the current directory for html embedding."""
         return shutil.copy2(self.VIDEO_PATH_AURORA, "./aurora_forecast.mp4")
+
+    def copy_aurora_image(self) -> str:
+        """Copy the Kp-dependent auroral intensity image to the current directory for html embedding."""
+        return shutil.copy2(self.IMAGE_PATH_AURORA, "./auroro_LAST.png")
 
     def setup_logging(self) -> None:
         """
@@ -430,6 +435,12 @@ In no event will GFZ be liable for any damages direct, indirect, incidental, or 
 """
         #message += self._kp_html_table(high_records, probability_df)
 
+        # First add the geomagnetic activity scale section
+        message += """## GEOMAGNETIC ACTIVITY SCALE"""
+        message += self.get_storm_level_description_table()
+        message += "\n"
+
+        # Then optionally add the aurora watch section
         AURORA_KP = 7
         high_records_above_threshold = high_records[
             (high_records["minimum"].astype(float) >= AURORA_KP)
@@ -441,18 +452,22 @@ In no event will GFZ be liable for any damages direct, indirect, incidental, or 
             message += f"""
 ## **AURORA WATCH:**
 
-<video width="800" controls autoplay loop muted>
-  <source src="aurora_forecast.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+<div class="aurora-watch-row">
+  <div class="aurora-col">
+    <img src="auroro_LAST.png" alt="Kp-dependent Auroral Intensity Prediction" class="aurora-forecast-img" />
+  </div>
+  <div class="aurora-col">
+    <video class="aurora-forecast-video" controls autoplay loop muted>
+      <source src="aurora_forecast.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+</div>
 
 **Note:** Kp ≥ {DECIMAL_TO_KP[AURORA_KP]} indicate potential auroral activity at Berlin latitudes.
 
 """
 
-        message += """## GEOMAGNETIC ACTIVITY SCALE"""
-        message += self.get_storm_level_description_table()
-        message += "\n"
         message += self.footer()
 
         return message.strip()
@@ -631,6 +646,7 @@ In no event will GFZ be liable for any damages direct, indirect, incidental, or 
 
             _ = self.copy_image()
             self.LOCAL_AURORA_VIDEO_PATH = self.copy_aurora_video()
+            _ = self.copy_aurora_image()
             email_sent = self.send_alert(subject, message)
             message_for_file = markdown.markdown(
                 message.replace("cid:forecast_image", self.LOCAL_IMAGE_PATH),
@@ -720,6 +736,10 @@ In no event will GFZ be liable for any damages direct, indirect, incidental, or 
                     .forecast-caption {{ font-size: 12px; color: #555; margin-top: 4px; }}
                     small {{ font-size: 11px; color: #333; }}
                     hr {{ border: 0; border-top: 1px solid #ddd; margin: 20px 0; }}
+                    .aurora-watch-row {{ display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0; }}
+                    .aurora-col {{ flex: 1 1 0; min-width: 280px; }}
+                    .aurora-forecast-img {{ width: 100%; height: auto; display: block; }}
+                    .aurora-forecast-video {{ width: 100%; height: auto; display: block; }}
                 </style>
             </head>
             <body>
