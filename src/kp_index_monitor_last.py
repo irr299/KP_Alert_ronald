@@ -55,6 +55,8 @@ class AnalysisResults:
         Boolean indicating if alert should be sent
     probability_df : pd.DataFrame
         DataFrame containing probability of Kp exceeding threshold
+    storm_prob_df : pd.DataFrame
+        DataFrame containing storm probabilities (prob 6-7, prob 7-8, prob >= 8)
     """
 
     max_kp: float
@@ -64,6 +66,7 @@ class AnalysisResults:
     next_24h_forecast: pd.DataFrame
     alert_worthy: bool
     probability_df: pd.DataFrame
+    storm_prob_df: pd.DataFrame
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -224,6 +227,7 @@ class KpMonitor:
                 probability_df.drop(columns=["Time (UTC)"], inplace=True)
 
                 empty = df.iloc[0:0].copy()
+                storm_prob_df = pd.DataFrame(columns=["Time (UTC)", "prob 6-7", "prob 7-8", "prob >= 8"])
                 return AnalysisResults(
                     max_kp=float("nan"),
                     max_df=max_values,
@@ -232,6 +236,7 @@ class KpMonitor:
                     next_24h_forecast=empty,
                     alert_worthy=False,
                     probability_df=probability_df.round(2),
+                    storm_prob_df=storm_prob_df,
                 )
 
             max: float = np.round(max_values.max(), 2)
@@ -250,6 +255,9 @@ class KpMonitor:
             probability_df.index = probability_df["Time (UTC)"]
             probability_df.drop(columns=["Time (UTC)"], inplace=True)
             probability_df = probability_df.replace({"Probability": {1.0: 0.95}})
+            
+            storm_prob_df = df[df.index >= self.current_utc_time][["prob 6-7", "prob 7-8", "prob >= 8"]].copy()
+            
             analysis = AnalysisResults(
                 max_kp=max,
                 max_df=max_values,
@@ -258,6 +266,7 @@ class KpMonitor:
                 next_24h_forecast=next_24h.round(2),
                 alert_worthy=len(high_kp_records) > 0,
                 probability_df=probability_df.round(2),
+                storm_prob_df=storm_prob_df,
             )
 
             if not np.isnan(max):
@@ -277,6 +286,7 @@ class KpMonitor:
             probability_df = pd.DataFrame({"Time (UTC)": df["Time (UTC)"], "Probability": probability})
             probability_df.index = probability_df["Time (UTC)"]
             probability_df.drop(columns=["Time (UTC)"], inplace=True)
+            storm_prob_df = pd.DataFrame(columns=["Time (UTC)", "prob 6-7", "prob 7-8", "prob >= 8"])
             return AnalysisResults(
                 max_kp=float("nan"),
                 max_df=pd.Series(dtype=float),
@@ -285,6 +295,7 @@ class KpMonitor:
                 next_24h_forecast=empty,
                 alert_worthy=False,
                 probability_df=probability_df.round(2),
+                storm_prob_df=storm_prob_df,
             )
 
     def footer(self) -> str:
@@ -328,6 +339,36 @@ In no event will GFZ be liable for any damages direct, indirect, incidental, or 
 <a id="fn3"></a><sup>3</sup> Median Kp Index: Median value of Kp Ensembles  
 <a id="fn4"></a><sup>4</sup> Geomagnetic Activity Level based on Min-Max range
 """
+        return table
+
+    def _storm_probability_table(self, storm_prob_df: pd.DataFrame) -> str:
+        """Generate markdown table for storm probabilities (Kp 6-7, 7-8, >=8)."""
+        if storm_prob_df.empty:
+            return ""
+        
+        filtered_rows = []
+        for idx, row in storm_prob_df.iterrows():
+            total_prob = row["prob 6-7"] + row["prob 7-8"] + row["prob >= 8"]
+            if total_prob > 0.50:
+                filtered_rows.append((idx, row))
+        
+        if not filtered_rows:
+            return ""
+        
+        table = """
+## STORM PROBABILITY FORECAST (Kp ≥ 6)
+
+| Time (CET) | Prob 6-7 | Prob 7-8 | Prob ≥8 |
+|------------|----------|----------|---------|
+"""
+        for idx, row in filtered_rows:
+            time_cet = idx.tz_convert(CET).strftime("%d.%m.%Y %H:%M")
+            prob_6_7 = f"{row['prob 6-7'] * 100:.0f}%"
+            prob_7_8 = f"{row['prob 7-8'] * 100:.0f}%"
+            prob_8_plus = f"{row['prob >= 8'] * 100:.0f}%"
+            table += f"| {time_cet} | {prob_6_7} | {prob_7_8} | {prob_8_plus} |\n"
+        
+        table += "\n*Showing timestamps where combined probability of Kp ≥ 6 exceeds 50%*\n"
         return table
 
     def get_observed_kp(self, start: pd.Timestamp) -> Tuple[str, float] | None:
@@ -461,6 +502,12 @@ In no event will GFZ be liable for any damages direct, indirect, incidental, or 
 
 """
         #message += self._kp_html_table(high_records, probability_df)
+
+        # Add storm probability table if there are rows with combined prob > 50%
+        storm_table = self._storm_probability_table(analysis["storm_prob_df"])
+        if storm_table:
+            message += storm_table
+            message += "\n"
 
         # First add the geomagnetic activity scale section
         message += """## GEOMAGNETIC ACTIVITY SCALE"""
