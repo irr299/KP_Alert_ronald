@@ -14,26 +14,32 @@
                     .forecast-caption { font-size: 12px; color: #555; margin-top: 4px; }
                     small { font-size: 11px; color: #333; }
                     hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
-                    .aurora-watch-row { display: flex; align-items: flex-start; gap: 16px; margin: 16px 0; flex-wrap: wrap; }
-                    .aurora-forecast-img { max-width: 500px; width: 100%; height: auto; flex-shrink: 0; }
+                    .aurora-watch-row { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0; }
+                    .aurora-col { flex: 1 1 0; min-width: 280px; }
+                    .aurora-forecast-img { width: 100%; height: auto; display: block; }
+                    .aurora-forecast-video { width: 100%; height: auto; display: block; }
                 </style>
             </head>
             <body>
             <h2 style="color: #d9534f;">SPACE WEATHER ALERT - SEVERE STORM CONDITIONS (G4) with probability ≥ 95% predicted</h2>
 
 <h3>At 13:00 (CET) 12.03.2026 , space weather can reach SEVERE STORM CONDITIONS with Kp ≥ 8 with probability ≥ 95%.</h3>
-<p><strong>Current Conditions:</strong> QUIET   (Observed Kp data available up to 07:00 CET 12.03.2026)</p>
-<p><strong>Alert sent at:</strong> 09:53 CET 12.03.2026 </p>
+<p><strong>Current Conditions:</strong> QUIET   (Observed Kp data available up to 10:00 CET 12.03.2026)</p>
+<p><strong>Alert sent at:</strong> 11:03 CET 12.03.2026 </p>
 <p><img alt="Forecast Image" src="./kp_swift_ensemble_LAST.png" /></p>
 <p class="forecast-caption"><strong>Caption:</strong> Kp index forecast: bar colours show activity level green being quiet, yellow being moderate storm, red being high strom. For more information refer the table below. Red dashed line = SWPC (NOAA) official Kp forecast.  Error bars indicates the minimum-maximum spread of Kp values.</p>
 
 <h2><strong>AURORA WATCH:</strong></h2>
 <div class="aurora-watch-row">
-  <img src="auroro_LAST.png" alt="Kp-dependent Auroral Intensity Prediction" class="aurora-forecast-img" />
-  <video width="800" controls autoplay loop muted>
-    <source src="aurora_forecast.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  <div class="aurora-col">
+    <img src="auroro_LAST.png" alt="Kp-dependent Auroral Intensity Prediction" class="aurora-forecast-img" />
+  </div>
+  <div class="aurora-col">
+    <video class="aurora-forecast-video" controls autoplay loop muted>
+      <source src="aurora_forecast.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
 </div>
 
 <p><strong>Note:</strong> Kp ≥ 7 indicate potential auroral activity at Berlin latitudes.</p>
