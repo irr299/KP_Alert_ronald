@@ -462,6 +462,12 @@ In no event will GFZ be liable for any damages direct, indirect, incidental, or 
 """
         #message += self._kp_html_table(high_records, probability_df)
 
+        # First add the geomagnetic activity scale section
+        message += """## GEOMAGNETIC ACTIVITY SCALE"""
+        message += self.get_storm_level_description_table()
+        message += "\n"
+
+        # Then optionally add the aurora watch section
         AURORA_KP = 7
         high_records_above_threshold = high_records[
             (high_records["minimum"].astype(float) >= AURORA_KP)
@@ -489,9 +495,6 @@ In no event will GFZ be liable for any damages direct, indirect, incidental, or 
 
 """
 
-        message += """## GEOMAGNETIC ACTIVITY SCALE"""
-        message += self.get_storm_level_description_table()
-        message += "\n"
         message += self.footer()
 
         return message.strip()
